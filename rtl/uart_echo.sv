@@ -1,4 +1,4 @@
-module uart_echo_top #(paramater DATA_WIDTH = 8)(
+module uart_echo #(parameter DATA_WIDTH = 8)(
     // input
     input clk,
     input rst,
@@ -24,14 +24,17 @@ module uart_echo_top #(paramater DATA_WIDTH = 8)(
 //back to idle
 wire busy_tx;
 wire txd_o;
-uart_tx uart_tx_echo_inst #(.DATA_WIDTH(DATA_WIDTH)) (
+wire s_axis_tready;
+uart_tx #(.DATA_WIDTH(DATA_WIDTH)) uart_tx_echo_inst  (
     .clk(clk),
     .rst(rst),
 
     //axi input
     .s_axis_tdata(data_in),
     .s_axis_tvalid(valid_li),
-    .s_axis_tready(ready_li),
+
+    //axi output
+    .s_axis_tready(s_axis_tready),
 
     //uart interface
     .txd(txd_o),
@@ -56,15 +59,17 @@ wire overrun_err_rx;
 wire frame_err_rx;
 wire [DATA_WIDTH-1:0] m_axis_tdata_o;
 wire m_axis_tvalid_o;
-wire m_axis_tready_o;
-uart_rx uart_rx_echo_inst #(.DATA_WIDTH(DATA_WIDTH)) (
+
+uart_rx #(.DATA_WIDTH(DATA_WIDTH)) uart_rx_echo_inst  (
     .clk(clk),
     .rst(rst),
+
+    //axi input
+    .m_axis_tready(1'b1),
 
     //axi output
     .m_axis_tdata(m_axis_tdata_o),
     .m_axis_tvalid(m_axis_tvalid_o),
-    .m_axis_tready(m_axis_tready_o),
 
     //uart interface
     .rxd(txd_o),
@@ -80,5 +85,5 @@ uart_rx uart_rx_echo_inst #(.DATA_WIDTH(DATA_WIDTH)) (
 //assign output of rx
 assign data_out = m_axis_tdata_o;
 assign valid_lo = m_axis_tvalid_o;
-assign ready_lo = m_axis_tready_o;
+assign ready_lo = 1'b1;
 endmodule

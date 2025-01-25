@@ -3,6 +3,7 @@ module uart_echo_tb
     import dv_pkg::*;
     ;
     parameter DATA_WIDTH = 8;
+    parameter CLK_PERIOD = 8;
     reg clk;
     reg rst;
     reg [DATA_WIDTH-1:0] data_in;
@@ -12,7 +13,9 @@ module uart_echo_tb
     wire valid_lo;
     wire ready_lo;
 
-uart_echo_top #(.DATA_WIDTH(DATA_WIDTH)) uart_echo_inst (
+    reg [DATA_WIDTH-1:0] random_data;
+
+uart_echo #(.DATA_WIDTH(DATA_WIDTH)) uart_echo_inst (
     .clk(clk),
     .rst(rst),
     .data_in(data_in),
@@ -24,7 +27,10 @@ uart_echo_top #(.DATA_WIDTH(DATA_WIDTH)) uart_echo_inst (
     .ready_lo(ready_lo)
 );
 
-always #4 clk = ~clk; // 125 MHz
+initial begin
+    clk = 0;
+    forever #(CLK_PERIOD/2) clk = ~clk; //8ns period 125MHz clock
+end
 
 initial begin
     $dumpfile( "dump.fst" );
@@ -34,7 +40,6 @@ initial begin
     $timeformat( -3, 3, "ms", 0);
 
     //signals
-    clk = 0;
     rst = 1;
     data_in = 0;
     valid_li = 0;
@@ -47,7 +52,7 @@ initial begin
     #8 rst = 1;
 
     //input stimuli
-    for (i = 0; i < 100; i = i + 1) begin
+    for (integer i = 0; i < 100; i = i + 1) begin
         random_data = $urandom_range(0, 255);
         send_data(random_data);
         recieve_data(random_data);
