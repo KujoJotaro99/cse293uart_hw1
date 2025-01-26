@@ -4,7 +4,8 @@ SIM_OUT = obj_dir/uart_echo_tb.out
 WAVE = dump.vcd
 
 #tools
-VERILATOR = verilator
+VERILATOR := /workspaces/cse293uart_hw1/verilator/bin/verilator
+
 
 #paths
 THIRD_PARTY_DIR = third_party
@@ -19,14 +20,15 @@ all: $(SIM_OUT)
 #compile rule
 #-cc to geenrate cpp file
 #-exe to make verilator generate executable
-$(SIM_OUT): $(RTL_FILES) $(TB_FILES) ./dv/uart_echo_tb.cpp
+$(SIM_OUT): $(RTL_FILES) $(TB_FILES)
 	@echo "Running Verilator with files:"
 	@echo "RTL Files: $(RTL_FILES)"
 	@echo "TB Files: $(TB_FILES)"
-	$(VERILATOR) --cc --exe --sv -Wno-fatal --debug --trace \
+	$(VERILATOR) --binary --timing -Wno-fatal \
 		-I$(THIRD_PARTY_DIR)/alexforencich_uart \
 		-f rtl/rtl.f -f dv/dv.f -f dv/verilator_options.f \
-		./dv/uart_echo_tb.cpp -o $(SIM_OUT)
+		$(RTL_FILES) $(TB_FILES) \
+		--top-module uart_echo_tb
 
 
 #run rule
