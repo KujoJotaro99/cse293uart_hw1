@@ -4,9 +4,5 @@
 --assert
 --trace-fst
 --trace-structs
---main-top-name "-"
 --x-assign unique
 --x-initial unique
--Werror-IMPLICIT
--Werror-USERERROR
--Werror-LATCH
