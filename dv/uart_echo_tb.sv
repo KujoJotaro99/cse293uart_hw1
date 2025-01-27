@@ -13,8 +13,6 @@ module uart_echo_tb
     wire valid_lo;
     wire ready_lo;
 
-    reg [DATA_WIDTH-1:0] random_data;
-
 uart_echo #(.DATA_WIDTH(DATA_WIDTH)) uart_echo_inst (
     .clk(clk),
     .rst(rst),
@@ -40,7 +38,7 @@ initial begin
     $timeformat( -3, 3, "ms", 0);
 
     //signals
-    rst = 1;
+    rst = 0;
     data_in = 0;
     valid_li = 0;
     ready_li = 1;
@@ -48,14 +46,16 @@ initial begin
     $display( "Start simulation." );
 
     //reset test
-    #8 rst = 0;
-    #8 rst = 1;
+    #16 rst = 1;
+    #16 rst = 0;
+    //wait 10 cycles
     #80;
     //input stimuli
     for (integer i = 0; i < 100; i = i + 1) begin
-        random_data = $urandom_range(0, 255);
-        send_data(random_data);
-        recieve_data(random_data);
+        data_in = $urandom_range(0, 255);
+        $display( "%d", data_in );
+        send_data(data_in[7:0]);
+        recieve_data(data_in[7:0]);
     end
 
     $display( "End simulation." );
@@ -76,14 +76,23 @@ endtask
 
 //task to check output
 task recieve_data(input [DATA_WIDTH-1:0] expected_data);
+    integer timeout_counter;
     begin
-        while (!valid_lo) #8;
-        if (data_out === expected_data) begin
+        timeout_counter = 100;
+        while (!valid_lo && timeout_counter > 0) begin
+            #8;
+            timeout_counter = timeout_counter - 1;
+        end
+
+        if (timeout_counter == 0) begin
+            $display("FAIL: Timeout waiting for valid_lo. Expected 0x%02X", expected_data);
+        end else if (data_out === expected_data) begin
             $display("PASS: Received echo data = 0x%02X", data_out);
         end else begin
             $display("FAIL: Expected 0x%02X, but got 0x%02X", expected_data, data_out);
         end
     end
 endtask
+
 
 endmodule

@@ -5,7 +5,7 @@ WAVE = dump.vcd
 
 #tools
 #VERILATOR := /workspaces/cse293uart_hw1/verilator/bin/verilator
-VERILATOR=verilator
+VERILATOR=utils/oss-cad-suite/bin/verilator
 
 #paths
 THIRD_PARTY_DIR = third_party

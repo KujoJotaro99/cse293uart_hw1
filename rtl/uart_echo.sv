@@ -43,7 +43,7 @@ uart_tx #(.DATA_WIDTH(DATA_WIDTH)) uart_tx_echo_inst  (
     .busy(busy_tx),
 
     //config
-    .prescale(125000000/(9600*8))
+    .prescale(1627)
 );
 //uart rx instance
 //reset: all low
@@ -65,7 +65,7 @@ uart_rx #(.DATA_WIDTH(DATA_WIDTH)) uart_rx_echo_inst  (
     .rst(rst),
 
     //axi input
-    .m_axis_tready(1'b1),
+    .m_axis_tready(s_axis_tready),
 
     //axi output
     .m_axis_tdata(m_axis_tdata_o),
@@ -80,7 +80,7 @@ uart_rx #(.DATA_WIDTH(DATA_WIDTH)) uart_rx_echo_inst  (
     .frame_error(frame_err_rx),
 
     //config
-    .prescale(125000000/(9600*8))
+    .prescale(1627)
 );
 //assign output of rx
 assign data_out = m_axis_tdata_o;
