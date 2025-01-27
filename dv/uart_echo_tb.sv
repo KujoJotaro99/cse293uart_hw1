@@ -50,7 +50,7 @@ initial begin
     //reset test
     #8 rst = 0;
     #8 rst = 1;
-
+    #80;
     //input stimuli
     for (integer i = 0; i < 100; i = i + 1) begin
         random_data = $urandom_range(0, 255);
