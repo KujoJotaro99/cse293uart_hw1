@@ -1,28 +1,26 @@
+`timescale 1ns/1ps
+
 module uart_echo_tb
     import config_pkg::*;
     import dv_pkg::*;
     ;
     parameter DATA_WIDTH = 8;
     parameter CLK_PERIOD = 8;
+    parameter BAUD_RATE = 9600;
+    parameter TIME_SPENT_PER_BIT = 1_000_000_000 / BAUD_RATE;
+
     reg clk;
     reg rst;
-    reg [DATA_WIDTH-1:0] data_in;
-    reg valid_li;
-    reg ready_li;
-    wire [DATA_WIDTH-1:0] data_out;
-    wire valid_lo;
-    wire ready_lo;
+    reg [DATA_WIDTH-1:0] a_i;
+    reg t_valid_i;
+    reg [DATA_WIDTH-1:0] a_o;
 
 uart_echo #(.DATA_WIDTH(DATA_WIDTH)) uart_echo_inst (
     .clk(clk),
     .rst(rst),
-    .data_in(data_in),
-    .valid_li(valid_li),
-    .ready_li(ready_li),
-
-    .data_out(data_out),
-    .valid_lo(valid_lo),
-    .ready_lo(ready_lo)
+    .t_valid_i(t_valid_i),
+    .a_i(a_i),
+    .a_o(a_o)
 );
 
 initial begin
@@ -39,9 +37,8 @@ initial begin
 
     //signals
     rst = 0;
-    data_in = 0;
-    valid_li = 0;
-    ready_li = 1;
+    t_valid_i = 0;
+
 
     $display( "Start simulation." );
 
@@ -51,48 +48,13 @@ initial begin
     //wait 10 cycles
     #80;
     //input stimuli
-    for (integer i = 0; i < 100; i = i + 1) begin
-        data_in = $urandom_range(0, 255);
-        $display( "%d", data_in );
-        send_data(data_in[7:0]);
-        recieve_data(data_in[7:0]);
-    end
-
+    a_i = 8'hFF;
+    t_valid_i = 1;
+    #20;
+    t_valid_i = 0;
+    #2048;
     $display( "End simulation." );
     $finish;
 end
-
-//task to set valid high and low for data stream
-task send_data(input [DATA_WIDTH-1:0] tx_data);
-    begin
-        valid_li = 1;
-        data_in = tx_data;
-        //assert for at least one cycle so enough samples can be taken by rx uart
-        #8;
-        valid_li = 0;
-        data_in = 0;
-    end
-endtask
-
-//task to check output
-task recieve_data(input [DATA_WIDTH-1:0] expected_data);
-    integer timeout_counter;
-    begin
-        timeout_counter = 100;
-        while (!valid_lo && timeout_counter > 0) begin
-            #8;
-            timeout_counter = timeout_counter - 1;
-        end
-
-        if (timeout_counter == 0) begin
-            $display("FAIL: Timeout waiting for valid_lo. Expected 0x%02X", expected_data);
-        end else if (data_out === expected_data) begin
-            $display("PASS: Received echo data = 0x%02X", data_out);
-        end else begin
-            $display("FAIL: Expected 0x%02X, but got 0x%02X", expected_data, data_out);
-        end
-    end
-endtask
-
 
 endmodule

@@ -1,16 +1,16 @@
 module uart_echo #(parameter DATA_WIDTH = 8)(
     // input
+    input [DATA_WIDTH-1:0] a_i,
+    input t_valid_i,
     input clk,
     input rst,
-    input [DATA_WIDTH-1:0] data_in,
-    input valid_li,
-    input ready_li,
 
     // output
-    output [DATA_WIDTH-1:0] data_out,
-    output valid_lo,
-    output ready_lo
+    output [DATA_WIDTH-1:0] a_o
 );
+//either first piece of data in when valid is high, otherwise echo previous data from output back to input
+wire [DATA_WIDTH-1:0] a_i_feedback;
+assign a_i_feedback = {8{t_valid_i}} & a_i | a_o & {8{r_valid_o}};
 //prescale calculation, slows down sampling rate to match baud rate since system clock is much faster, samples in the middle of cycle n times
 //prescale = system clk freq / (baud rate * sampples per bit)
 // uart tx instance
@@ -23,27 +23,23 @@ module uart_echo #(parameter DATA_WIDTH = 8)(
 //if all bits done transmitting, sets txd_reg to high
 //back to idle
 wire busy_tx;
+wire t_ready_o;
 wire txd_o;
-wire s_axis_tready;
+
 uart_tx #(.DATA_WIDTH(DATA_WIDTH)) uart_tx_echo_inst  (
     .clk(clk),
     .rst(rst),
-
     //axi input
-    .s_axis_tdata(data_in),
-    .s_axis_tvalid(valid_li),
-
+    .s_axis_tdata(a_i_feedback),
+    .s_axis_tvalid(t_valid_i | r_valid_o),
     //axi output
-    .s_axis_tready(s_axis_tready),
-
+    .s_axis_tready(t_ready_o),
     //uart interface
     .txd(txd_o),
-
     //status
     .busy(busy_tx),
-
     //config
-    .prescale(1627)
+    .prescale(1) //125,000,000/(9600/8)
 );
 //uart rx instance
 //reset: all low
@@ -57,33 +53,24 @@ uart_tx #(.DATA_WIDTH(DATA_WIDTH)) uart_tx_echo_inst  (
 wire busy_rx;
 wire overrun_err_rx;
 wire frame_err_rx;
-wire [DATA_WIDTH-1:0] m_axis_tdata_o;
-wire m_axis_tvalid_o;
-
+wire r_valid_o;
 uart_rx #(.DATA_WIDTH(DATA_WIDTH)) uart_rx_echo_inst  (
     .clk(clk),
     .rst(rst),
-
     //axi input
-    .m_axis_tready(s_axis_tready),
-
+    .m_axis_tready(t_ready_o),
     //axi output
-    .m_axis_tdata(m_axis_tdata_o),
-    .m_axis_tvalid(m_axis_tvalid_o),
-
+    .m_axis_tdata(a_o),
+    .m_axis_tvalid(r_valid_o),
     //uart interface
     .rxd(txd_o),
-
     //status
     .busy(busy_rx),
     .overrun_error(overrun_err_rx),
     .frame_error(frame_err_rx),
-
     //config
-    .prescale(1627)
+    .prescale(1) //125,000,000/(9600/8)
 );
-//assign output of rx
-assign data_out = m_axis_tdata_o;
-assign valid_lo = m_axis_tvalid_o;
-assign ready_lo = 1'b1;
+
+
 endmodule
