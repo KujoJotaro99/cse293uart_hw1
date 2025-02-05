@@ -1,3 +1,4 @@
+yosys -import
 
 yosys -import
 

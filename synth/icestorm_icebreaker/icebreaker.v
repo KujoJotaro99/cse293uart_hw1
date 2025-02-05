@@ -1,37 +1,39 @@
+`timescale 1ns/1ps
 
 module icebreaker (
-    input  wire CLK,
-    input  wire BTN_N,
-    output wire LEDG_N
+    input CLK,
+    input BTN_N,
+    input rx_i,
+    output tx_o
 );
 
 wire clk_12 = CLK;
-wire clk_50;
-
 wire led;
 assign LEDG_N = !led;
+wire clk_pll_50_25;//generated system clock from PLL
+wire rst_inv;//synchronized reset signal
+assign rst_inv = ~BTN_N;
 
 // icepll -i 12 -o 50
 SB_PLL40_PAD #(
-    .FEEDBACK_PATH("SIMPLE"),
-    .DIVR(4'd0),
-    .DIVF(7'd66),
-    .DIVQ(3'd4),
-    .FILTER_RANGE(3'd1)
-) pll (
-    .LOCK(),
-    .RESETB(1'b1),
-    .BYPASS(1'b0),
+    .DIVR(4'b0000),
+    .DIVF(7'b1000010),
+    .DIVQ(3'b100),
+    .FILTER_RANGE(3'b001),
+    .FEEDBACK_PATH("SIMPLE")
+) pll_inst (
     .PACKAGEPIN(clk_12),
-    .PLLOUTGLOBAL(clk_50)
+    .PLLOUTGLOBAL(clk_pll_50_25),
+    .LOCK(),
+    .BYPASS(1'b0),
+    .RESETB(1'b1)
 );
 
-blinky #(
-    .ResetValue(5000000)
-) blinky (
-    .clk_i(clk_50),
-    .rst_ni(BTN_N),
-    .led_o(led)
+//UART echo module
+uart_echo uart_inst (
+    .clk(clk_pll_50_25), //50.25mhz clk
+    .rst(rst_inv),
+    .rx_i(rx_i),//input
+    .tx_o(tx_o)//puput
 );
-
 endmodule

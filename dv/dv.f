@@ -1,4 +1,2 @@
-
 dv/dv_pkg.sv
-
-dv/uart_echo_tb.sv
+dv/uart_tb.sv

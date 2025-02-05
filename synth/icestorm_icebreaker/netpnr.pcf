@@ -5,4 +5,9 @@ set_io -nowarn CLK        35
 
 # LEDs and Button
 set_io -nowarn BTN_N      10
-set_io -nowarn LEDG_N     37
+
+#rx_i pin connected to my tx pin
+set_io rx_i 6
+
+#tx_o pin connected to my rx pin
+set_io tx_o 9
