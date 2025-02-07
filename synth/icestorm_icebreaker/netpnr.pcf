@@ -11,3 +11,9 @@ set_io rx_i 6
 
 #tx_o pin connected to my rx pin
 set_io tx_o 9
+
+set_io -nowarn led_o[0]       27
+set_io -nowarn led_o[1]       25
+set_io -nowarn led_o[2]       21
+set_io -nowarn led_o[4]       26
+set_io -nowarn led_o[3]       23
